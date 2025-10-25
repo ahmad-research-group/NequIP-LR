@@ -24,6 +24,16 @@ PBC_KEY: Final[str] = "pbc"
 ATOMIC_NUMBERS_KEY: Final[str] = "atomic_numbers"
 # [n_atom, 1] long tensor
 ATOM_TYPE_KEY: Final[str] = "atom_types"
+# [n_atom, 1] long tensor
+CHARGES_KEY: Final[str] = "initial_charges"
+# [n_species, 1] long tensor
+HARDNESS_KEY: Final[str] = "hardness"
+# [n_atom, 1] long tensor
+ELECTRONEGATIVITY_KEY: Final[str] = "electronegativity"
+# [1] long tensor
+ELECTROSTATIC_ENERGY_KEY: Final[str] = "electrostatic_energy"
+# [1] long tensor
+TOTAL_CHARGE_KEY: Final[str] = "total_charge"
 
 BASIC_STRUCTURE_KEYS: Final[List[str]] = [
     POSITIONS_KEY,
@@ -33,6 +43,7 @@ BASIC_STRUCTURE_KEYS: Final[List[str]] = [
     PBC_KEY,
     ATOM_TYPE_KEY,
     ATOMIC_NUMBERS_KEY,
+    TOTAL_CHARGE_KEY
 ]
 
 # A [n_edge, 3] tensor of displacement vectors associated to edges
