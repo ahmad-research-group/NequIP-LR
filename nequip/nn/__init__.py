@@ -15,6 +15,9 @@ from .grad_output import PartialForceOutput, ForceStressOutput
 from .misc import Concat, ApplyFactor, SaveForOutput
 from .utils import scatter, tp_path_exists, with_edge_vectors_
 from .model_modifier_utils import model_modifier, replace_submodules
+from ._ewald import EwaldQeq
+from ._electrostatic import Qeq, SumEnergies
+
 
 __all__ = [
     "GraphModel",
@@ -39,4 +42,7 @@ __all__ = [
     "with_edge_vectors_",
     "model_modifier",
     "replace_submodules",
+    "EwaldQeq",
+    "Qeq",
+    "SumEnergies",
 ]

@@ -58,3 +58,71 @@ class NodeTypeEmbed(GraphModuleMixin, torch.nn.Module):
         if self.set_features:
             data[AtomicDataDict.NODE_FEATURES_KEY] = embedding
         return data
+
+class NodeChargeEmbed(GraphModuleMixin, torch.nn.Module):
+    """Generates node type embeddings.
+
+    Args:
+        type_names (List[str]): list of type names
+        num_features (int): embedding dimension
+        set_features (bool): ``node_features`` will be set in addition to ``node_attrs`` if ``True`` (default)
+    """
+
+    num_types: int
+    num_features: int
+    set_features: bool
+
+    def __init__(
+        self,
+        type_names: List[str],
+        num_features: int,
+        qmin: float,
+        qmax: float,
+        num_categories: int,
+        set_features: bool = True,
+        irreps_in=None,
+    ):
+        super().__init__()
+        # === bookkeeping ===
+        self.num_types = len(type_names)
+        self.num_features = num_features
+        self.set_features = set_features
+        # === Embedding module ===
+        embed_module = torch.nn.Embedding(
+            num_embeddings=self.num_types,
+            embedding_dim=self.num_features,
+        )
+        self.embed_module = conditional_torchscript_jit(embed_module)
+        irreps_out = {
+            AtomicDataDict.NODE_ATTRS_KEY: Irreps([(self.num_features + num_categories, (0, 1))])
+        }
+        if self.set_features:
+            irreps_out[AtomicDataDict.NODE_FEATURES_KEY] = irreps_out[
+                AtomicDataDict.NODE_ATTRS_KEY
+            ]
+        
+        #charge categories
+        self.filter = torch.linspace(qmin, qmax, num_categories)
+        self.var = (qmax - qmin) / num_categories
+        self.num_categories = num_categories
+        self._init_irreps(irreps_in=irreps_in, irreps_out=irreps_out)
+
+    def forward(self, data: AtomicDataDict.Type) -> AtomicDataDict.Type:
+        device = data[AtomicDataDict.POSITIONS_KEY].device
+        charge_vector = torch.exp(-((data[AtomicDataDict.CHARGES_KEY] - self.filter.to(device)) ** 2) / self.var ** 2)
+        embedding = self.embed_module(charge_vector)
+        
+        if self.num_categories>1:
+            one_hot_with_charge = torch.cat((data[AtomicDataDict.NODE_ATTRS_KEY], charge_vector), dim=1)
+        else:
+            one_hot_with_charge = torch.cat((data[AtomicDataDict.NODE_ATTRS_KEY], data[AtomicDataDict.CHARGES_KEY]), dim=1)
+        
+        data[AtomicDataDict.NODE_ATTRS_KEY] = one_hot_with_charge
+        
+        if self.set_features:
+            data[AtomicDataDict.NODE_FEATURES_KEY] = one_hot_with_charge
+
+        data[AtomicDataDict.NODE_ATTRS_KEY] = embedding
+        if self.set_features:
+            data[AtomicDataDict.NODE_FEATURES_KEY] = embedding
+        return data
